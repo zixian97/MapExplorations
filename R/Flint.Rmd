@@ -1,0 +1,37 @@
+---
+title: "Flint Data"
+author: "Zixian Li"
+date: "March 6, 2017"
+output: html_document
+---
+
+```{r}
+require(rgeos)
+require(pycno)
+require(sp)
+require(dplyr)
+require(rgdal)
+require(stringr)
+require(ggplot2)
+require(RColorBrewer)
+```
+
+```{r}
+mydata <- Test_Results_Flint_548141_7
+zipcode <- readOGR("../data/shapes/cb_2015_us_zcta510_500k", layer =  "cb_2015_us_zcta510_500k")
+Mzipcode <- spTransform(zipcode, CRS("+proj=longlat +datum=WGS84"))
+#? How can I sort out the zipcode?
+zip <- c('48503','48504','48505','48506','48507','48502','48508')
+NEzipcode <- Mzipcode %>% subset(ZCTA5CE10 %in% zip)
+plot(NEzipcode)
+mydata <- mydata %>%
+  group_by(X16) %>%
+  rename(ZCTA5CE10 = X16)
+NEzipcode@data <- left_join(NEzipcode@data, mydata, by ='ZCTA5CE10')
+plot(NEzipcode)
+
+```
+```{r}
+
+```
+
