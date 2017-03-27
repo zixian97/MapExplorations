@@ -17,21 +17,42 @@ require(RColorBrewer)
 ```
 
 ```{r}
-mydata <- Test_Results_Flint_548141_7
+mydata <- Sentinel_Data_Set_1A_B_515890_7_2
 zipcode <- readOGR("../data/shapes/cb_2015_us_zcta510_500k", layer =  "cb_2015_us_zcta510_500k")
 Mzipcode <- spTransform(zipcode, CRS("+proj=longlat +datum=WGS84"))
 #? How can I sort out the zipcode?
-zip <- c('48503','48504','48505','48506','48507','48502','48508')
+zip <- c('48503','48504','48505','48506','48507','48502','48532')
 NEzipcode <- Mzipcode %>% subset(ZCTA5CE10 %in% zip)
 plot(NEzipcode)
 mydata <- mydata %>%
-  group_by(X16) %>%
-  rename(ZCTA5CE10 = X16)
+  rename(ZCTA5CE10 = Zip_Code) %>%
+  filter(Date_Submittted == '16-Feb-16') %>%
+  group_by(ZCTA5CE10) %>%
+  summarize(Copper = mean(`Result_Copper_(PPB)`))
+mydata$ZCTA5CE10 <- as.factor(mydata$ZCTA5CE10)
 NEzipcode@data <- left_join(NEzipcode@data, mydata, by ='ZCTA5CE10')
 plot(NEzipcode)
 
 ```
 ```{r}
-
+NEzipcode@data$id = rownames(NEzipcode@data)
+NEzipcode.points = fortify(NEzipcode, region = 'id')
+NEzipcode.df = inner_join(NEzipcode.points, NEzipcode@data, by = 'id')
+NEcounties <- spTransform(NEcounties, CRS("+proj=longlat +datum=WGS84"))
+choropleth1 <- ggplot(data = NEzipcode.df, aes(x=long, y = lat)) + 
+  geom_polygon(color = "black", aes(group = id, fill=Copper))
+choropleth1
 ```
+
+```{r}
+detach("package:dplyr", unload=TRUE) 
+
+NEzipcode.copper <- pycno(NEzipcode, NEzipcode$Copper, 0.05, converge = 3)
+image(NEzipcode.copper, col=rev(brewer.pal(9, "Blues")))
+plot(NEzipcode,add=TRUE)
+```
+
+
+
+
 
